@@ -1,0 +1,14 @@
+1) Transformar em POO?
+1.1) Comentários
+1.2) Testes
+1.3) printar em hex
+
+2) Melhorar a divisão dos arquivos?
+
+3) Estudo E Analise
+3.1) Normalizar tempos e proporções de performance
+3.2) parameters check com FIPS203 (cyphertext size etc)
+
+4) Fazer o relatório
+
+5) Hamming distance? Algo assim sla
