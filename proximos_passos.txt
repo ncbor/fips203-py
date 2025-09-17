@@ -1,14 +1,8 @@
-1) Transformar em POO?
-1.1) Comentários
-1.2) Testes
-1.3) printar em hex
+- Readme detalhado
+- Printar bytes em hex (apenas com .hex() rip)
 
-2) Melhorar a divisão dos arquivos?
+Testes de desempenho:
+ - Temporal: Normalizar tempos e proporções de performance
+ - Espacial: parameters check com FIPS203 (cyphertext size etc)
 
-3) Estudo E Analise
-3.1) Normalizar tempos e proporções de performance
-3.2) parameters check com FIPS203 (cyphertext size etc)
-
-4) Fazer o relatório
-
-5) Hamming distance? Algo assim sla
+- Fazer o relatório final do atena

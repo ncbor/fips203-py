@@ -1,5 +1,4 @@
-# --- FIPS203 4: Auiliary Algorithms ---
-# LITTLE ENDIAN!!!!! LITTLE ENDIAN!!!!!!
+# --- FIPS203 Section 4: Auiliary Algorithms ---
 
 from Crypto.Hash import SHA3_256, SHA3_512, SHAKE128, SHAKE256
 
@@ -10,13 +9,13 @@ n = 256
 # === FIPS203 4.1: Cryptographic Functions ===
 # === === === === ===  === === === === === ===
 
-def H(b: bytes) -> bytes:  # 32 bytes
+def H(b: bytes) -> bytes:
     return SHA3_256.new(b).digest()
 
-def J(b: bytes) -> bytes:  # 32 bytes
+def J(b: bytes) -> bytes:
     return SHAKE256.new(b).read(32)
     
-def G(b: bytes) -> tuple[bytes, bytes]:  # two 32-byte halves
+def G(b: bytes) -> tuple[bytes, bytes]:
     h = SHA3_512.new(b).digest()
     return h[:32], h[32:]
 
@@ -24,7 +23,6 @@ def PRF_eta(eta: int, s: bytes, b: bytes) -> bytes:
     assert eta in (2,3) and len(s)==32 and len(b)==1
     return SHAKE256.new(s + b).read(64*eta)
     
-# SHAKE128 XOF wrapper per Alg.2 with byte-length squeezes
 class XOF:
     @staticmethod
     def Init():
@@ -37,27 +35,27 @@ class XOF:
     def Squeeze(ctx, outlen_bytes: int):
         return ctx, ctx.read(outlen_bytes)
 
-
 # === === === === === === === === === ===
 # === FIPS203 4.2: General Algorithms ===
 # === === === === === === === === === ===
 
 # === 4.2.1: Conversion and Compression Algorithms ===
 
+# FIPS203 Algorithm 3
 def BitsToBytes(bits: list[int]) -> bytes:
     assert len(bits)%8 == 0
     out = bytearray(len(bits)//8)
     for i,bit in enumerate(bits):
-        out[i>>3] |= (bit & 1) << (i & 7)
-        # out[i//8] += (bit % 2) << (i % 8)
+        out[i>>3] |= (bit & 1) << (i & 7) # bitwise for out[i//8] += (bit % 2) << (i % 8)
     return bytes(out)
     
+# FIPS203 Algorithm 4
 def BytesToBits(B: bytes) -> list[int]:
     b = []
     for byte in B:
         for j in range(8):
-            b.append(byte & 1) # Gets least-significant bit
-            byte >>= 1         # Right-shift by one position
+            b.append(byte & 1)
+            byte >>= 1
     return b
 
 def Compress_d(x: list[int], d: int) -> list[int]:
@@ -66,12 +64,13 @@ def Compress_d(x: list[int], d: int) -> list[int]:
         return int(((1<<d) * x2 + q//2) // q) % (1<<d)
     return [compress_coefficient(i, d) for i in x]
 
-def Decompress_d(y: int, d: int) -> int:
+def Decompress_d(y: list[int], d: int) -> list[int]:
     assert 1 <= d < 12
     def decompress_coefficient(y2,d):
         return int((q * y2 + (1<<d)//2) // (1<<d)) % q
     return [decompress_coefficient(i,d) for i in y]
 
+# FIPS203 Algorithm 5
 def ByteEncode_d(F: list[int], d: int) -> bytes:
     assert len(F)==256
     assert 1<=d<=12
@@ -91,6 +90,7 @@ def ByteEncode_d(F: list[int], d: int) -> bytes:
                 a = (a - (a & 1)) >> 1  # a <- (a - b)/2  (= a >>= 1)
     return BitsToBytes(bits)
 
+# FIPS203 Algorithm 6
 def ByteDecode_d(B: bytes, d: int) -> list[int]:
     assert 1 <= d <= 12
     assert len(B) * 8 == 256 * d  # B ∈ B^{32·d}
@@ -106,9 +106,10 @@ def ByteDecode_d(B: bytes, d: int) -> list[int]:
     return F
 
 # === 4.2.1: Conversion and Compression Algorithms ===
-# Algorithm 7 SampleNTT(B): B = seed32 || bytes(i) || bytes(j)
+
+# FIPS203 Algorithm 7
 def SampleNTT(B: bytes) -> list[int]:
-    assert len(B)==34
+    assert len(B)==34 # B = seed32 || bytes(i) || bytes(j)
     ctx = XOF.Init()
     ctx = XOF.Absorb(ctx, B)
     a_hat=[0]*256
@@ -125,9 +126,9 @@ def SampleNTT(B: bytes) -> list[int]:
             j+=1
     return a_hat
 
-# Algorithm 8 SamplePolyCBD_eta(B)
+# FIPS203 Algorithm 8
 def SamplePolyCBD_eta(B: bytes, eta: int) -> list[int]:
-    assert eta in (2, 3)  # FIPS 203 uses η ∈ {2,3}
+    assert eta in (2, 3)  # FIPS 203 uses eta ∈ {2,3}
     assert len(B)==64*eta
     f=[0]*256; t = BytesToBits(B)
     for i in range(256):
@@ -136,8 +137,7 @@ def SamplePolyCBD_eta(B: bytes, eta: int) -> list[int]:
         f[i] = (x - y) % q
     return f
 
-# === K-PKE and ML-KEM shells ===
-
+# === Precomputed Values for NTT ===
 _BitRev7 = lambda i: [
     1, 1729, 2580, 3289, 2642, 630, 1897, 848,
     1062, 1919, 193, 797, 2786, 3260, 569, 1746,
@@ -173,6 +173,7 @@ _2BitRev7_1 = lambda i: [
     2110, -2110, 2935, -2935, 885, -885, 2154, -2154
 ][i % 128]
 
+# FIPS203 Algorithm 9
 def NTT(f: list[int]) -> list[int]:
     assert len(f) == 256
     f_hat = list(f)
@@ -191,8 +192,8 @@ def NTT(f: list[int]) -> list[int]:
         length //= 2
     return f_hat
 
-
-def NTT_inv(f_hat: list[int]):
+# FIPS203 Algorithm 10
+def NTT_inv(f_hat: list[int]) -> list[int]:
     assert len(f_hat) == 256
     f = list(f_hat)
     i = 127
@@ -212,14 +213,14 @@ def NTT_inv(f_hat: list[int]):
         f[j] = (f[j] * 3303) % q
     return f
 
-# Algorithm 12
-def BaseCaseMultiply(a0, a1, b0, b1, gamma):
+# FIPS203 Algorithm 12
+def BaseCaseMultiply(a0: int, a1: int, b0: int, b1: int, gamma: int) -> (int,int):
     c0 = (a0 * b0 + a1 * b1 * gamma) % q
     c1 = (a0 * b1 + a1 * b0) % q
     return c0, c1
 
-# Algorithm 11
-def MultiplyNTTs(f_hat, g_hat):
+# FIPS203 Algorithm 11
+def MultiplyNTTs(f_hat: list[int], g_hat: list[int]) -> list[int]:
     assert len(f_hat) == 256 and len(g_hat) == 256
     h_hat = [0] * 256
     for i in range(128):

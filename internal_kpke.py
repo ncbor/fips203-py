@@ -1,8 +1,13 @@
-from primitives import *
+# NÃO USAR ESSES MÉTODOS DE PUBLIC KEY ENCRIPTION POR SI SÓ!!
+# É APENAS PARTE DO ML_KEM!!
 
-def K_PKE_KeyGen(d: bytes, k: int, eta1: int):
-    # assert len(d) == 32 and eta1 in (2, 3) and 1 <= k <= 4
+from auxiliaries import *
 
+q = 3329
+n = 256
+
+# FIPS203 Algorithm 13
+def KPKE_KeyGen(d: bytes, k: int, eta1: int) -> (bytes,bytes):
     rho, sigma = G(d + bytes([k]))
 
     A_hat = [[None for _ in range(k)] for _ in range(k)]
@@ -53,10 +58,8 @@ def K_PKE_KeyGen(d: bytes, k: int, eta1: int):
     dk = b"".join(ByteEncode_d(s_hat[i], 12) for i in range(k))
     return ek, dk
 
-    
-#
-
-def K_PKE_Encrypt(ek: bytes, m: bytes, r: bytes, k: int, eta1: int, eta2: int, du: int, dv: int):
+# FIPS203 Algorithm 14
+def KPKE_Encrypt(ek: bytes, m: bytes, r: bytes, k: int, eta1: int, eta2: int, du: int, dv: int) -> bytes:
     # t^
     t_hat = []
     for i in range(k):
@@ -111,8 +114,8 @@ def K_PKE_Encrypt(ek: bytes, m: bytes, r: bytes, k: int, eta1: int, eta2: int, d
     c = c1+c2
     return c
     
-
-def K_PKE_Decrypt(dk: bytes, c: bytes, k: int, du: int, dv: int):
+# FIPS203 Algorithm 15
+def KPKE_Decrypt(dk: bytes, c: bytes, k: int, du: int, dv: int) -> bytes:
     c1 = c[0:32 * du * k]
     c2 = c[32 * du * k:32 * du * k + 32 * dv]
 
