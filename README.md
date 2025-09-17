@@ -143,7 +143,10 @@ This implementation mirrors the structure and intent of FIPS 203 algorithms:
 ---
 
 ## Minimal example script
-
+```bash
+$ cd fips203-py/
+$ python3
+```
 ```python
 from mlkem import ML_KEM
 
