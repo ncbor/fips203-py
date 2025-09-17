@@ -1,6 +1,3 @@
-- Readme detalhado
-- Printar bytes em hex (apenas com .hex() rip)
-
 Testes de desempenho:
  - Temporal: Normalizar tempos e proporções de performance
  - Espacial: parameters check com FIPS203 (cyphertext size etc)
